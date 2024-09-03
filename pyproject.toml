@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "flink-table-api-python-examples"
+version = "0.1.0"
+description = "Examples for using Python Table API with Confluent Cloud"
+license = "Apache-2.0"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">= 3.9, < 3.12"
+confluent_flink_table_api_python_plugin = "TODO"
+confluent_flink_jars = "TODO"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
