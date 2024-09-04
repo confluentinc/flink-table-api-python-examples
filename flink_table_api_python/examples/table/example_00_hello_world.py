@@ -16,20 +16,16 @@
 # limitations under the License.
 ################################################################################
 
-import os
-
-from pyflink.table import (TableEnvironment, DataTypes)
+from pyflink.table import (TableEnvironment)
 from pyflink.table.confluent import ConfluentSettings, ConfluentTools
 from pyflink.table.expressions import row
-
-CLOUD_PROPERTIES_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                     "../../../config/cloud.properties")
+from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # A table program example to get started.
 #
 # It executes two foreground statements in Confluent Cloud. The results of both
 # statements are printed to the console.
-if __name__ == '__main__':
+def run():
   # Setup connection properties to Confluent Cloud
   settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
 

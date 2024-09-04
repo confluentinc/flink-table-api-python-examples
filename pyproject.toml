@@ -1,10 +1,20 @@
 [tool.poetry]
-name = "flink-table-api-python-examples"
+name = "flink_table_api_python"
 version = "0.1.0"
 description = "Examples for using Python Table API with Confluent Cloud"
+authors = ["Confluent"]
 license = "Apache-2.0"
 readme = "README.md"
-package-mode = false
+
+[tool.poetry.scripts]
+example_00_hello_world = "flink_table_api_python.examples.table.example_00_hello_world:run"
+example_01_catalogs_and_databases = "flink_table_api_python.examples.table.example_01_catalogs_and_databases:run"
+example_02_unbounded_tables = "flink_table_api_python.examples.table.example_02_unbounded_tables:run"
+example_03_transforming_tables = "flink_table_api_python.examples.table.example_03_transforming_tables:run"
+example_04_creating_tables = "flink_table_api_python.examples.table.example_04_creating_tables:run"
+example_05_table_pipelines = "flink_table_api_python.examples.table.example_05_table_pipelines:run"
+example_06_values_and_data_types = "flink_table_api_python.examples.table.example_06_values_and_data_types:run"
+example_07_changelogs = "flink_table_api_python.examples.table.example_07_changelogs:run"
 
 [tool.poetry.dependencies]
 python = ">= 3.9, < 3.12"

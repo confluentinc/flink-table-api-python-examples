@@ -16,13 +16,9 @@
 # limitations under the License.
 ################################################################################
 
-import os
-
 from pyflink.table import (TableEnvironment, Schema, DataTypes, FormatDescriptor)
 from pyflink.table.confluent import ConfluentSettings, ConfluentTableDescriptor
-
-CLOUD_PROPERTIES_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                     "../../../config/cloud.properties")
+from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # NOTE: This example requires write access to a Kafka cluster. Fill out the
 # given variables below with target catalog/database if this is fine for you.
@@ -39,7 +35,7 @@ TARGET_TABLE2 = "MyExampleTable2"
 
 # A table program example that illustrates how to create a table backed
 # by a Kafka topic.
-if __name__ == '__main__':
+def run():
   settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
 
   t_env = TableEnvironment.create(settings)

@@ -16,17 +16,13 @@
 # limitations under the License.
 ################################################################################
 
-import os
-
 from pyflink.table import (TableEnvironment, DataTypes)
 from pyflink.table.confluent import ConfluentSettings
 from pyflink.table.expressions import col, row
-
-CLOUD_PROPERTIES_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                     "../../../config/cloud.properties")
+from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # A table program example that illustrates bounded and unbounded statements.
-if __name__ == '__main__':
+def run():
   settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
   env = TableEnvironment.create(settings)
 

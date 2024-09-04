@@ -16,14 +16,11 @@
 # limitations under the License.
 ################################################################################
 
-import os
-
 from pyflink.table import (TableEnvironment, DataTypes, Schema)
 from pyflink.table.confluent import ConfluentSettings, ConfluentTableDescriptor
 from pyflink.table.expressions import col, row, concat, lit
+from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
-CLOUD_PROPERTIES_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                     "../../../config/cloud.properties")
 
 # NOTE: This example requires write access to a Kafka cluster. Fill out the given variables
 # below with target catalog/database if this is fine for you.
@@ -42,7 +39,7 @@ TARGET_TABLE1 = "PricePerProduct"
 TARGET_TABLE2 = "PricePerCustomer"
 
 # A table program example that demos how to pipe data into a table or multiple tables.
-if __name__ == '__main__':
+def run():
   settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
   env = TableEnvironment.create(settings)
 
