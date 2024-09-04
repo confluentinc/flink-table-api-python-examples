@@ -24,6 +24,9 @@ from pyflink.table.confluent import ConfluentSettings, ConfluentTableDescriptor
 CLOUD_PROPERTIES_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                                      "../../../config/cloud.properties")
 
+# NOTE: This example requires write access to a Kafka cluster. Fill out the
+# given variables below with target catalog/database if this is fine for you.
+
 # Fill this with an environment you have write access to
 TARGET_CATALOG = ""
 
@@ -34,6 +37,8 @@ TARGET_DATABASE = ""
 TARGET_TABLE1 = "MyExampleTable1"
 TARGET_TABLE2 = "MyExampleTable2"
 
+# A table program example that illustrates how to create a table backed
+# by a Kafka topic.
 if __name__ == '__main__':
   settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
 
@@ -77,24 +82,3 @@ if __name__ == '__main__':
         'key.format' = 'json-registry',
         'value.format' = 'json-registry'
       )""" % TARGET_TABLE1)
-
-# TODO: In python there is no ResolvedSchema and thus no way to retrieve only physical fields.
-#   # The schema builders can be quite useful to avoid manual schema work. You can adopt schema
-#   # from other tables, massage the schema, and/or add additional columns
-#   productsRow = t_env.from_path("examples.marketplace.products") \
-#   .get_schema() \
-#   .toPhysicalRowDataType()
-# List<String> columnNames = DataType.getFieldNames(productsRow);
-# List<DataType> columnTypes = DataType.get_field_data_types(productsRow);
-#
-#   # In this example, the table will get all names/data types from the table 'products'
-#   # plus an 'additionalColumn' column
-#   t_env.createTable(
-#     TARGET_TABLE2,
-#     ConfluentTableDescriptor.for_managed()
-#     .schema(
-#         Schema.new_builder()
-#         .from_fields(columnNames, columnTypes)
-#         .column("additionalColumn", DataTypes.STRING())
-#         .build())
-#   .build())

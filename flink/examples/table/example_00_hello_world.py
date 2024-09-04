@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
   # The Table API is centered around 'Table' objects which help in defining
   # data pipelines fluently. Pipelines can be defined fully programmatic...
-  table = env.from_elements([row("Hello world!")], DataTypes.STRING())
+  table = env.from_elements([row("Hello world!")])
   # ... or with embedded Flink SQL
   # table = env.sql_query("SELECT 'Hello world!'")
 
@@ -56,8 +56,7 @@ if __name__ == '__main__':
   moreHellos = env.from_elements([
     row("Hello Bob"),
     row("Hello Alice"),
-    row("Hello Peter")], DataTypes.STRING()) \
-    .alias("greeting")
+    row("Hello Peter")])
   rows = ConfluentTools.collect_changelog_limit(moreHellos, 10)
   for result in rows:
-    print(result)
+    print(result[0])

@@ -46,8 +46,7 @@ if __name__ == '__main__':
   print("Running bounded statement from values...")
 
   # Pipelines derived from finite tables (such as fromValues) are bounded as well
-  env.from_elements([row("Bob"), row("Alice"), row("Peter")],
-                    DataTypes.STRING()) \
+  env.from_elements([row("Bob"), row("Alice"), row("Peter")]) \
     .alias("name") \
     .filter(col("name").like("%e%")) \
     .execute() \
