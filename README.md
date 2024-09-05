@@ -4,7 +4,7 @@ This repository contains examples for running Apache Flink's Table API on Conflu
 
 ## Introduction to Table API
 
-The [Table API](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/table/overview/) enables a programmatic
+The [Table API](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/python/table_api_tutorial/) enables a programmatic
 way of developing, testing, and submitting Flink pipelines for processing data streams.
 Streams can be finite or infinite, with insert-only or changelog data. The latter allows for dealing with *Change Data
 Capture* (CDC) events.
@@ -21,8 +21,8 @@ REST API. It submits [Statements](https://docs.confluent.io/cloud/current/api.ht
 [StatementResults](https://docs.confluent.io/cloud/current/api.html#tag/Statement-Results-(sqlv1)).
 
 Table programs are implemented against [Flink's open source Table API for Python](https://github.com/apache/flink/tree/master/flink-python/pyflink/table).
-The provided Confluent pip packages repackage the Python API and bundles the Confluent-specific components for powering the `TableEnvironment` without the need
-for a local Flink cluster. By adding the `confluent-flink-table-api-java-plugin` dependency, Flink internal components such as
+The provided Confluent pip packages repackage Flink's Python API and bundle the Confluent-specific components for powering the `TableEnvironment` without the need
+for a local Flink cluster. While using those packages, Flink internal components such as
 `CatalogStore`, `Catalog`, `Planner`, `Executor`, and configuration are managed by the plugin and fully integrate with
 Confluent Cloud. Including access to Apache Kafka®, Schema Registry, and Flink Compute Pools.
 
@@ -148,7 +148,7 @@ from pyflink.table.confluent import ConfluentSettings
 from pyflink.table import TableEnvironment
 
 def run():
-  # Args might set cloud, region, org, env, and compute pool.
+  # Properties file might set cloud, region, org, env, and compute pool.
   # Environment variables might pass key and secret.
 
   # Code sets the session name and SQL-specific options.
@@ -167,14 +167,14 @@ Store options (or some options) in a `cloud.properties` file:
 ```properties
 # Cloud region
 client.cloud=aws
-client.region=eu-west-1
+client.region=us-east-1
 
 # Access & compute resources
-client.flink-api-key=XXXXXXXXXXXXXXXX
-client.flink-api-secret=XxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx
-client.organization-id=00000000-0000-0000-0000-000000000000
-client.environment-id=env-xxxxx
-client.compute-pool-id=lfcp-xxxxxxxxxx
+client.flink-api-key=key
+client.flink-api-secret=secret
+client.organization-id=b0b21724-4586-4a07-b787-d0bb5aacbf87
+client.environment-id=env-z3y2x1
+client.compute-pool-id=lfcp-8m03rm
 ```
 
 Reference the `cloud.properties` file:
@@ -388,7 +388,7 @@ The following features are currently not supported:
 - String concatenation with `.plus` leads to errors. Use `Expressions.concat`.
 - Selecting `.rowtime` in windows leads to errors.
 - Using `.limit()` can lead to errors.
-- Python API is not fully on par with Java API. The API lacks support for: TablePipeline, ResolvedSchema
+- Python API is not fully on par with the Java API. The API lacks support for: TablePipeline, ResolvedSchema
 
 ### Supported API
 
