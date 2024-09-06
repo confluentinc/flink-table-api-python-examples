@@ -60,7 +60,7 @@ def run():
     ")")
 
   # (2) with Table API expressions
-  row = row(
+  r = row(
       # BOOLEAN
       lit(True),
       # STRING / CHAR / VARCHAR
@@ -95,7 +95,7 @@ def run():
       row(lit("Bob"), lit(True))
   )
 
-  fromExpressions = env.from_elements([row])
+  fromExpressions = env.from_elements([r])
 
   # Verify the derived data types and values
   print("Table from SQL expressions:")

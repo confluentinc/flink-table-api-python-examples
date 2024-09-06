@@ -65,7 +65,7 @@ def run():
   )
 
   # Alternatively, the call above could also be executed with SQL
-  t_env.executeSql(
+  t_env.execute_sql(
       """CREATE TABLE IF NOT EXISTS 
       `%s`
       (
