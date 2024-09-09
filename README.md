@@ -1,8 +1,8 @@
-# Apache Flink® Table API on Confluent Cloud - Examples for Python
+# Apache Flink® Table API on Confluent Cloud - Examples
 
 This repository contains examples for running Apache Flink's Table API on Confluent Cloud.
 
-## Introduction to Table API
+## Introduction to Table API for Python
 
 The [Table API](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/python/table_api_tutorial/) enables a programmatic
 way of developing, testing, and submitting Flink pipelines for processing data streams.
@@ -185,6 +185,8 @@ from pyflink.table.confluent import ConfluentSettings
 settings = ConfluentSettings.from_file("/path/to/cloud.properties")
 ```
 
+A path to a properties file can also be specified by setting the environment variable `FLINK_PROPERTIES`.
+
 ### Via Code
 
 Pass all options (or some options) in code:
@@ -225,6 +227,8 @@ from pyflink.table.confluent import ConfluentSettings
 
 settings = ConfluentSettings.from_global_variables()
 ```
+
+A path to a properties file can also be specified by setting the environment variable `FLINK_PROPERTIES`.
 
 ### Configuration Options
 
