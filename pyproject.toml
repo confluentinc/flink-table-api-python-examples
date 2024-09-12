@@ -15,6 +15,7 @@ example_04_creating_tables = "flink_table_api_python.examples.table.example_04_c
 example_05_table_pipelines = "flink_table_api_python.examples.table.example_05_table_pipelines:run"
 example_06_values_and_data_types = "flink_table_api_python.examples.table.example_06_values_and_data_types:run"
 example_07_changelogs = "flink_table_api_python.examples.table.example_07_changelogs:run"
+example_08_integration_and_deployment = "flink_table_api_python.examples.table.example_08_integration_and_deployment:run"
 
 [tool.poetry.dependencies]
 python = ">= 3.9, < 3.12"
