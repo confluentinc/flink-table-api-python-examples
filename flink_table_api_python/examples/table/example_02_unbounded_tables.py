@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import (TableEnvironment, DataTypes)
+from pyflink.table import TableEnvironment
 from pyflink.table.confluent import ConfluentSettings
 from pyflink.table.expressions import col, row
 from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH

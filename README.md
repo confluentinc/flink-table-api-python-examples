@@ -129,6 +129,21 @@ All required information can be found in the web UI of Confluent's Cloud Console
 
 Examples should be runnable after setting all configuration options correctly.
 
+### Table API Playground using Python Interactive Shell
+
+For convenience, the repository also contains an init script for playing around with
+Table API in an interactive manner.
+
+1. Run `poetry shell` to start a shell within the poetry virtualenv
+
+2. Point to the `cloud.properties` file: `export FLINK_PROPERTIES=./config/cloud.properties`
+
+3. Start python with `python -i setup_pyshell.py`
+
+4. The `TableEnvironment` is pre-initialized from environment variables and available under `env`.
+
+5. Run your first "Hello world!" using `env.execute_sql("SELECT 'Hello world!'").print()`
+
 ## Configuration
 
 The Table API plugin needs a set of configuration options for establishing a connection to Confluent Cloud.
@@ -332,6 +347,21 @@ Shortcuts:
 # For finite (i.e. bounded) tables
 ConfluentTools.collect_materialized(table)
 ConfluentTools.print_materialized(table)
+```
+
+### `ConfluentTools.get_statement_name` / `ConfluentTools.stop_statement`
+
+Additional lifecycle methods are available to control statements on Confluent Cloud after they have
+been submitted.
+
+```python
+# On TableResult object
+table_result = env.execute_sql("SELECT * FROM examples.marketplace.customers")
+statement_name = ConfluentTools.get_statement_name(table_result)
+ConfluentTools.stop_statement(table_result)
+
+# Based on statement name
+ConfluentTools.stop_statement_by_name(env, "table-api-2024-03-21-150457-36e0dbb2e366-sql")
 ```
 
 ### Confluent Table Descriptor
