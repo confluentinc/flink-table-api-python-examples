@@ -46,7 +46,7 @@ SQL = "SELECT brand, COUNT(*) AS vendors FROM ProductsMock %s GROUP BY brand"
 # pipeline for continuous testing and rollout.
 #
 # Because we cannot rely on production data in this example, the program sets
-# up some Kafka-backed tables with data during the {@code setup} phase.
+# up some Kafka-backed tables with data during the setup phase.
 #
 # Afterward, the program can operate in two modes: one for integration testing
 # (test phase) and one for deployment (deploy phase).
@@ -66,7 +66,7 @@ SQL = "SELECT brand, COUNT(*) AS vendors FROM ProductsMock %s GROUP BY brand"
 #     'products'.
 #   - Test the given SQL on a subset of data in 'ProductsMock' with the help of
 #     dynamic options.
-#   - Deploy an unbounded version of the tested SQL that write into
+#   - Deploy an unbounded version of the tested SQL that writes into
 #     'VendorsPerBrand'.
 def run(args=None):
   """Process command line arguments."""
@@ -99,7 +99,6 @@ def run(args=None):
 # --------------------------------------------------------------------------
 # Setup Phase
 # --------------------------------------------------------------------------
-
 def _set_up_program(env: TableEnvironment):
   print("Running setup...")
 
@@ -149,7 +148,6 @@ def _set_up_program(env: TableEnvironment):
 # -----------------------------------------------------------------------------
 # Test Phase
 # -----------------------------------------------------------------------------
-#
 def _test_program(env: TableEnvironment):
   print("Running test...")
   # Dynamic options allow influencing parts of a table scan. In this case, they
@@ -185,12 +183,11 @@ def _test_program(env: TableEnvironment):
 # ----------------------------------------------------------------------------
 # Deploy Phase
 # ----------------------------------------------------------------------------
-#
 def _deploy_program(env: TableEnvironment):
   print("Running deploy...")
 
   # It is possible to give a better statement name for deployment but make sure
-  # that the name is unique across environment and region.
+  # that the name is unique within environment and region.
   statement_name = "vendors-per-brand-" + str(uuid.uuid4())
   env.get_config().set("client.statement-name", statement_name)
 
