@@ -100,6 +100,10 @@ Use [poetry](https://python-poetry.org/) to build a virtual environment containi
 poetry install
 ```
 
+**Note**: Flink's Python API communicates with a Java process under the hood. Make sure you also have at least Java 11
+installed. Check that your `JAVA_HOME` environment variable is correctly set. Only checking `java -version` might not
+be enough.
+
 Run an example script. No worries the program is read-only so it won't affect your existing
 Kafka clusters. All results will be printed to the console.
 ```bash
@@ -520,4 +524,29 @@ ConfluentTableDescriptor.*
 ## Support
 
 Table API goes hand in hand with Flink SQL on Confluent Cloud.
-For feature requests or support tickets, use one of the [established channels](https://docs.confluent.io/cloud/current/flink/get-help.html). 
+For feature requests or support tickets, use one of the [established channels](https://docs.confluent.io/cloud/current/flink/get-help.html).
+
+### Frequent Issues
+
+#### 1. `py4j.protocol.Py4JError: ConfluentSettings does not exist in the JVM`
+
+This indicates that the Python API was unable to find a working Java runtime for starting a JVM process.
+
+The plugin requires at least Java 11. Check that your `JAVA_HOME` environment variable is correctly set:
+```
+echo "$JAVA_HOME"
+```
+
+It should look similar to:
+```java
+/Users/Bob/.jenv/versions/11.0
+```
+
+Note: Only checking `java -version` might not be enough. It might be that it shows a correct Java version, but `JAVA_HOME`
+still points to an invalid version. Consider using [jenv](https://github.com/jenv/jenv).
+
+#### 2. `io.confluent.flink.plugin.ConfluentFlinkException: Parameter 'client.organization-id' not found.`
+
+This indicates that something is wrong with your configuration. Make sure to fill out the`./config/cloud.properties` file
+with the required connection information to Confluent Cloud, or set all properties via environment variables as described
+above.
