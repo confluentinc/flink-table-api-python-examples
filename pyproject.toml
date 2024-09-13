@@ -19,8 +19,7 @@ example_08_integration_and_deployment = "flink_table_api_python.examples.table.e
 
 [tool.poetry.dependencies]
 python = ">= 3.9, < 3.12"
-confluent_flink_table_api_python_plugin = "TODO"
-confluent_flink_jars = "TODO"
+confluent_flink_table_api_python_plugin = "1.20.38"
 
 [build-system]
 requires = ["poetry-core"]
