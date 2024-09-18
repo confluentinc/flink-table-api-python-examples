@@ -77,4 +77,4 @@ def run():
         'kafka.retention.time' = '0 ms',
         'key.format' = 'json-registry',
         'value.format' = 'json-registry'
-      )""" % TARGET_TABLE1)
+      )""" % TARGET_TABLE2)
