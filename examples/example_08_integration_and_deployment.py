@@ -80,7 +80,7 @@ def run(args=None):
 
   mode = args[0]
 
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
   env = TableEnvironment.create(settings)
   env.use_catalog(TARGET_CATALOG)
   env.use_database(TARGET_DATABASE)

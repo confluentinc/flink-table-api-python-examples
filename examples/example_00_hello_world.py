@@ -16,10 +16,9 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import (TableEnvironment)
 from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table.expressions import row
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
+from pyflink.table import TableEnvironment, Row
+from pyflink.table.expressions import col, row
 
 # A table program example to get started.
 #
@@ -27,7 +26,7 @@ from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 # statements are printed to the console.
 def run():
   # Setup connection properties to Confluent Cloud
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
 
   # Initialize the session context to get started
   env = TableEnvironment.create(settings)
@@ -56,3 +55,6 @@ def run():
   rows = ConfluentTools.collect_changelog_limit(moreHellos, 10)
   for result in rows:
     print(result[0])
+
+if __name__ == "__main__":
+  run()

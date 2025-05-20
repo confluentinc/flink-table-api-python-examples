@@ -18,11 +18,10 @@
 
 from pyflink.table import TableEnvironment
 from pyflink.table.confluent import ConfluentSettings
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # A table program example to interact with catalogs and databases.
 def run():
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
   env = TableEnvironment.create(settings)
 
   # Each catalog object is located in a catalog and database
@@ -46,3 +45,6 @@ def run():
   # Once current catalog/database are set, work with
   # 1-part identifiers (i.e. object names) to read tables
   env.from_path("`customers`").print_schema()
+
+if __name__ == "__main__":
+  run()
