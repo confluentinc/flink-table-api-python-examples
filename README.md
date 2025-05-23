@@ -283,13 +283,61 @@ The following configuration needs to be provided:
 
 Additional configuration:
 
-| Property key            | Environment variable | Required | Comment                                                                                                  |
-|-------------------------|----------------------|----------|----------------------------------------------------------------------------------------------------------|
-| `client.principal`      | `PRINCIPAL_ID`       | N        | Principal that runs submitted statements. For example: `sa-23kgz4` (for a service account)               |
-| `client.context`        |                      | N        | A name for this Table API session. For example: `my_table_program`                                       |
-| `client.statement-name` |                      | N        | Unique name for statement submission. By default, generated using a UUID.                                |
-| `client.rest-endpoint`  | `REST_ENDPOINT`      | N        | URL to the REST endpoint. For example: `proxyto.confluent.cloud`                                         |
-| `client.catalog-cache`  |                      | N        | Expiration time for catalog objects. For example: '5 min'. '1 min' by default. '0' disables the caching. |
+| Property key               | Environment variable | Required | Comment                                                                                                  |
+|----------------------------|----------------------|----------|----------------------------------------------------------------------------------------------------------|
+| `client.endpoint-template` | `ENDPOINT_TEMPLATE`  | N        | A template for the endpoint URL. For example: `https://flinkpls-dom123.{region}.{cloud}.confluent.cloud` |
+| `client.principal`         | `PRINCIPAL_ID`       | N        | Principal that runs submitted statements. For example: `sa-23kgz4` (for a service account)               |
+| `client.context`           |                      | N        | A name for this Table API session. For example: `my_table_program`                                       |
+| `client.statement-name`    |                      | N        | Unique name for statement submission. By default, generated using a UUID.                                |
+| `client.rest-endpoint`     | `REST_ENDPOINT`      | N        | URL to the REST endpoint. For example: `proxyto.confluent.cloud`                                         |
+| `client.catalog-cache`     |                      | N        | Expiration time for catalog objects. For example: '5 min'. '1 min' by default. '0' disables the caching. |
+
+### Endpoint Configuration
+
+The Confluent Flink plugin provides options to configure endpoints for connecting to Confluent Cloud services. **The template-based approach is the recommended method.**
+
+### `client.endpoint-template`
+
+This option provides a template for constructing the Flink statement API endpoint URL.
+
+- **Default**: `https://flink.{region}.{cloud}.confluent.cloud`
+- **Example**: `https://flinkpls-dom123.{region}.{cloud}.confluent.cloud`
+- **Usage**: The template supports placeholders `{region}` and `{cloud}` that are replaced with the configured region and cloud provider values.
+- **Environment Variable**: `ENDPOINT_TEMPLATE`
+
+### `client.rest-endpoint` (Discouraged)
+
+This option specifies the base domain for REST API calls to Confluent Cloud. While still supported, using the template-based configuration above is preferred.
+
+- **Default**: No default value
+- **Example**: `proxy.confluent.cloud`
+- **Usage**: When specified, the plugin constructs the full Flink statement API endpoint URL as `https://flink.{region}.{cloud}.{rest-endpoint}` where `{region}` and `{cloud}` are replaced with the configured region and cloud provider values.
+- **Important**: `client.endpoint-template` and `client.rest-endpoint` are mutually exclusive. If both are set, an exception is thrown.
+- **Environment Variable**: `REST_ENDPOINT`
+
+### Relationship and Default Behavior
+
+1. **Mutual Exclusivity**:
+    - `client.endpoint-template` and `client.rest-endpoint` cannot be set simultaneously
+
+2. **Default Behavior**:
+    - If neither `client.rest-endpoint` nor `client.endpoint-template` is configured, the default template `https://flink.{region}.{cloud}.confluent.cloud` is used for statement API
+    - If endpoint templates are used, each endpoint is constructed independently with the provided templates
+
+### Example
+
+Here's a simple example showing how to configure an endpoint:
+
+```python
+# cloud.properties:
+# client.region=us-east-1
+# client.cloud=aws
+# client.endpoint-template=https://flinkpls-dom123.{region}.{cloud}.confluent.cloud
+
+# Resolved endpoints:
+# - Statement API: https://flinkpls-dom123.us-east-1.aws.confluent.cloud
+settings = ConfluentSettings.from_file("/cloud.properties")
+```
 
 ## Documentation for Confluent Utilities
 
