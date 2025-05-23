@@ -16,9 +16,9 @@
 # limitations under the License.
 ################################################################################
 
+from pyflink.table import TableEnvironment
 from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table import TableEnvironment, Row
-from pyflink.table.expressions import col, row
+from pyflink.table.expressions import row
 
 # A table program example to get started.
 #

@@ -19,7 +19,6 @@
 from pyflink.table import (TableEnvironment, DataTypes, Schema)
 from pyflink.table.confluent import ConfluentSettings, ConfluentTableDescriptor
 from pyflink.table.expressions import col, row, concat, lit
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 
 # NOTE: This example requires write access to a Kafka cluster. Fill out the given variables
@@ -40,7 +39,7 @@ TARGET_TABLE2 = "PricePerCustomer"
 
 # A table program example that demos how to pipe data into a table or multiple tables.
 def run():
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
   env = TableEnvironment.create(settings)
 
   env.use_catalog(TARGET_CATALOG)
@@ -59,6 +58,7 @@ def run():
           .build())
       .distributed_into(1)
       .build())
+  
   env.create_table(
       TARGET_TABLE2,
       ConfluentTableDescriptor.for_managed()
@@ -125,3 +125,6 @@ def run():
     )
 
   targetTable1.union_all(targetTable2).alias("status").execute().print()
+
+if __name__ == "__main__":
+  run()

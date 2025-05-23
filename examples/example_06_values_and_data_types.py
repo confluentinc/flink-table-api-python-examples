@@ -22,11 +22,10 @@ from pyflink.table import (TableEnvironment)
 from pyflink.table.confluent import ConfluentSettings
 from pyflink.table.expressions import row, lit, array, map_
 from pyflink.table.types import DataTypes
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 #  A table program example to create mock data
 def run():
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
   env = TableEnvironment.create(settings)
 
   env.use_catalog("examples")
@@ -105,3 +104,6 @@ def run():
   print("Table from Table expressions:")
   fromExpressions.print_schema()
   fromExpressions.execute().print()
+
+if __name__ == "__main__":
+  run()

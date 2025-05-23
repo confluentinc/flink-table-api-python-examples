@@ -19,11 +19,10 @@
 from pyflink.table import (TableEnvironment)
 from pyflink.table.confluent import ConfluentSettings, ConfluentTools
 from pyflink.table.expressions import col
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # A table program example that illustrates how to deal with changelogs.
 def run():
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
   env = TableEnvironment.create(settings)
 
   env.use_catalog("examples")
@@ -60,3 +59,6 @@ def run():
   ConfluentTools.print_changelog_limit(customers, 100)
   print("Print a table of the capped and applied changelog...")
   ConfluentTools.print_materialized_limit(customers, 100)
+
+if __name__ == "__main__":
+  run()
