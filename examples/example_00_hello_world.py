@@ -16,45 +16,34 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import TableEnvironment
 from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table.expressions import row
+from pyflink.table import TableEnvironment, Row
+from pyflink.table.expressions import col, row
 
-# A table program example to get started.
-#
-# It executes two foreground statements in Confluent Cloud. The results of both
-# statements are printed to the console.
 def run():
-  # Setup connection properties to Confluent Cloud
-  settings = ConfluentSettings.from_global_variables()
+    # Setup connection properties to Confluent Cloud
+    settings = ConfluentSettings.from_global_variables()
+    env = TableEnvironment.create(settings)
 
-  # Initialize the session context to get started
-  env = TableEnvironment.create(settings)
+  # Run your first Flink statement in Table API
+    env.from_elements([row("Hello world!")]).execute().print()
 
-  print("Running with printing...")
+    # Or use SQL
+    env.sql_query("SELECT 'Hello world!'").execute().print()
 
-  # The Table API is centered around 'Table' objects which help in defining
-  # data pipelines fluently. Pipelines can be defined fully programmatic...
-  table = env.from_elements([row("Hello world!")])
-  # ... or with embedded Flink SQL
-  # table = env.sql_query("SELECT 'Hello world!'")
+    # Structure your code with Table objects - the main ingredient of Table API.
+    table = env.from_path("examples.marketplace.clicks") \
+        .filter(col("user_agent").like("Mozilla%")) \
+        .select(col("click_id"), col("user_id"))
 
-  # Once the pipeline is defined, execute it on Confluent Cloud.
-  # If no target table has been defined, results are streamed back and can be printed
-  # locally. This can be useful for development and debugging.
-  table.execute().print()
+    table.print_schema()
+    print(table.explain())
 
-  print("Running with collecting...")
-
-  # Results can not only be printed but also collected locally and accessed
-  # individually. This can be useful for testing.
-  moreHellos = env.from_elements([
-    row("Hello Bob"),
-    row("Hello Alice"),
-    row("Hello Peter")])
-  rows = ConfluentTools.collect_changelog_limit(moreHellos, 10)
-  for result in rows:
-    print(result[0])
+    # Use the provided tools to test on a subset of the streaming data
+    expected = ConfluentTools.collect_materialized_limit(table, 50)
+    actual = [Row(42, 500)]
+    if expected != actual:
+        print("Results don't match!")
 
 if __name__ == "__main__":
-  run()
+    run()
