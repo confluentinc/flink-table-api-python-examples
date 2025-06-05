@@ -11,3 +11,25 @@ requires-python = ">=3.9,<3.12"
 dependencies = [
     "confluent-flink-table-api-python-plugin>=1.20.52",
 ]
+
+[dependency-groups]
+lint = ["ruff"]
+
+[tool.ruff]
+line-length = 99
+indent-width = 4
+target-version = "py39"
+extend-exclude = ["setup_pyshell.py"]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = []
+
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

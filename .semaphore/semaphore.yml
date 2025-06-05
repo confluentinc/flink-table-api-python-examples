@@ -1,0 +1,26 @@
+version: v1.0
+name: PR Test/Lint
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-1
+
+execution_time_limit:
+  hours: 1
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version python 3.9
+      - pip install uv
+      - checkout
+blocks:
+  - name: Lint and Formatting
+    dependencies: []
+    task:
+      jobs:
+        - name: Check
+          commands:
+            - uv tool run ruff check
+        - name: Formatting Check
+          commands:
+            - uv tool run ruff format --check
