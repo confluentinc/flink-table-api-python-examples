@@ -7,3 +7,6 @@ github:
   enable: true
 codeowners:
   enable: true
+semaphore:
+  enable: true
+  pipeline_enable: false
