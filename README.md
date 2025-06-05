@@ -79,11 +79,11 @@ if __name__ == "__main__":
 4. Optional: [Create a Kafka cluster](https://docs.confluent.io/cloud/current/clusters/create-cluster.html#manage-ak-clusters-on-ccloud)
    if you want to run examples that store data in Kafka
 5. Have the correct environment variables set as per [the documentation](https://docs.confluent.io/cloud/current/flink/reference/table-api.html#environment-variables)
-6. We recommend using a tool like uv to manage your Python versions and environments and Python 3.9-3.11 are the only versions currently supported.
+6. We recommend using a tool like [uv](https://docs.astral.sh/uv/) to manage your Python versions and environments and Python 3.9-3.11 are the only versions currently supported.
 
 ### Run Examples
 
-All example files are located in `flink_table_api_python/examples/table`. Each file contains a `run()`
+All example files are located in `examples`. Each file contains a `run()`
 function that can be executed directly or in `__main__`. Each has multiple table programs that will be executed individually. Every example program covers a different topic to learn
 more about how Table API can be used. It is recommended to go through the examples in the defined order as they partially
 build on top of each other.
@@ -98,11 +98,7 @@ Change the current directory.
 cd flink-table-api-python-examples
 ```
 
-We recommend using uv to create a virtual environment and install the required dependencies.
-
-```bash
-uv venv -p 3.11 .venv && source .venv/bin/activate && uv pip install -r requirements.txt
-```
+We recommend using [uv](https://docs.astral.sh/uv/) to run the scripts, will automatically create a virtualenv with the required dependencies.
 
 **Note**: Flink's Python API communicates with a Java process under the hood. Make sure you also have at least Java 11
 installed. Check that your `JAVA_HOME` environment variable is correctly set. Only checking `java -version` might not
@@ -120,7 +116,7 @@ brew install openjdk && export JAVA_HOME=$(/usr/libexec/java_home) && echo $JAVA
 Run an example script. No worries the program is read-only so it won't affect your existing
 Kafka clusters. All results will be printed to the console.
 ```bash
-python examples/example_00_hello_world
+uv run examples/example_00_hello_world
 ```
 
 An output similar to the following means that you are able to run the examples:
@@ -158,9 +154,9 @@ Examples should be runnable after setting all configuration options correctly.
 For convenience, the repository also contains an init script for playing around with
 Table API in an interactive manner.
 
-1. Run `python -i start_pyshell.py` to start an interactive repl to explore Table API.
+1. Create a virtualenv with `uv sync` and activate it with `source .venv/bin/activate`.
 
-2. Start python with `python -i setup_pyshell.py`
+2. Run `python -i start_pyshell.py` to start an interactive repl to explore Table API.
 
 3. The `TableEnvironment` is pre-initialized from environment variables and available under `env`.
 
