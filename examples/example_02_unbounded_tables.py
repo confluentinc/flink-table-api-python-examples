@@ -20,42 +20,40 @@ from pyflink.table import TableEnvironment
 from pyflink.table.confluent import ConfluentSettings
 from pyflink.table.expressions import col, row
 
+
 # A table program example that illustrates bounded and unbounded statements.
 def run():
-  settings = ConfluentSettings.from_global_variables()
-  env = TableEnvironment.create(settings)
+    settings = ConfluentSettings.from_global_variables()
+    env = TableEnvironment.create(settings)
 
-  env.use_catalog("examples")
-  env.use_database("marketplace")
+    env.use_catalog("examples")
+    env.use_database("marketplace")
 
-  # Statements can be finite (i.e. bounded) or infinite (i.e. unbounded).
-  # If one of the accessed input tables is unbounded, the statement is unbounded.
+    # Statements can be finite (i.e. bounded) or infinite (i.e. unbounded).
+    # If one of the accessed input tables is unbounded, the statement is unbounded.
 
-  print("Running bounded statements for listing...")
+    print("Running bounded statements for listing...")
 
-  # Catalog operations (such as show/list queries) are always finite
-  env.execute_sql("SHOW TABLES").print()
-  for t in env.list_tables():
-    print(t)
+    # Catalog operations (such as show/list queries) are always finite
+    env.execute_sql("SHOW TABLES").print()
+    for t in env.list_tables():
+        print(t)
 
-  print("Running bounded statement from values...")
+    print("Running bounded statement from values...")
 
-  # Pipelines derived from finite tables (such as fromValues) are bounded as well
-  env.from_elements([row("Bob"), row("Alice"), row("Peter")]) \
-    .alias("name") \
-    .filter(col("name").like("%e%")) \
-    .execute() \
-    .print()
+    # Pipelines derived from finite tables (such as fromValues) are bounded as well
+    env.from_elements([row("Bob"), row("Alice"), row("Peter")]).alias("name").filter(
+        col("name").like("%e%")
+    ).execute().print()
 
-  print("Running unbounded statement...")
+    print("Running unbounded statement...")
 
-  # Confluent's unbounded streaming examples don't terminate and
-  # mock real-time data from Kafka
-  env.from_path("clicks") \
-    .group_by(col("user_id")) \
-    .select(col("user_id"), col("view_time").sum) \
-    .execute() \
-    .print()
+    # Confluent's unbounded streaming examples don't terminate and
+    # mock real-time data from Kafka
+    env.from_path("clicks").group_by(col("user_id")).select(
+        col("user_id"), col("view_time").sum
+    ).execute().print()
+
 
 if __name__ == "__main__":
-  run()
+    run()

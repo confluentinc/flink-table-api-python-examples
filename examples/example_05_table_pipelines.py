@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import (TableEnvironment, DataTypes, Schema)
+from pyflink.table import TableEnvironment, DataTypes, Schema
 from pyflink.table.confluent import ConfluentSettings, ConfluentTableDescriptor
 from pyflink.table.expressions import col, row, concat, lit
 
@@ -37,94 +37,99 @@ TARGET_DATABASE = ""
 TARGET_TABLE1 = "PricePerProduct"
 TARGET_TABLE2 = "PricePerCustomer"
 
+
 # A table program example that demos how to pipe data into a table or multiple tables.
 def run():
-  settings = ConfluentSettings.from_global_variables()
-  env = TableEnvironment.create(settings)
+    settings = ConfluentSettings.from_global_variables()
+    env = TableEnvironment.create(settings)
 
-  env.use_catalog(TARGET_CATALOG)
-  env.use_database(TARGET_DATABASE)
+    env.use_catalog(TARGET_CATALOG)
+    env.use_database(TARGET_DATABASE)
 
-  print("Creating tables... %s" % [TARGET_TABLE1, TARGET_TABLE2])
+    print("Creating tables... %s" % [TARGET_TABLE1, TARGET_TABLE2])
 
-  # Create two helper tables that will be filled with data from examples
-  env.create_table(
-      TARGET_TABLE1,
-      ConfluentTableDescriptor.for_managed()
-      .schema(
-          Schema.new_builder()
-          .column("product_id", DataTypes.STRING().not_null())
-          .column("price", DataTypes.DOUBLE().not_null())
-          .build())
-      .distributed_into(1)
-      .build())
-  
-  env.create_table(
-      TARGET_TABLE2,
-      ConfluentTableDescriptor.for_managed()
-      .schema(
-          Schema.new_builder()
-          .column("customer_id", DataTypes.INT().not_null())
-          .column("price", DataTypes.DOUBLE().not_null())
-          .build())
-      .distributed_into(1)
-      .build())
+    # Create two helper tables that will be filled with data from examples
+    env.create_table(
+        TARGET_TABLE1,
+        ConfluentTableDescriptor.for_managed()
+        .schema(
+            Schema.new_builder()
+            .column("product_id", DataTypes.STRING().not_null())
+            .column("price", DataTypes.DOUBLE().not_null())
+            .build()
+        )
+        .distributed_into(1)
+        .build(),
+    )
 
-  print("Executing table pipeline synchronous...")
+    env.create_table(
+        TARGET_TABLE2,
+        ConfluentTableDescriptor.for_managed()
+        .schema(
+            Schema.new_builder()
+            .column("customer_id", DataTypes.INT().not_null())
+            .column("price", DataTypes.DOUBLE().not_null())
+            .build()
+        )
+        .distributed_into(1)
+        .build(),
+    )
 
-  table_result = \
-    env.from_elements(
+    print("Executing table pipeline synchronous...")
+
+    table_result = env.from_elements(
         [row("1408", 27.71), row("1062", 94.39), row("42", 80.01)],
         DataTypes.ROW(
-            [DataTypes.FIELD("customer_id", DataTypes.STRING()),
-             DataTypes.FIELD("price", DataTypes.DOUBLE())])
-    ) \
-      .execute_insert(TARGET_TABLE1)
+            [
+                DataTypes.FIELD("customer_id", DataTypes.STRING()),
+                DataTypes.FIELD("price", DataTypes.DOUBLE()),
+            ]
+        ),
+    ).execute_insert(TARGET_TABLE1)
 
-  # Execution happens async by default, use wait() to attach to the execution in case all
-  # sources are finite (i.e. bounded).
-  # For infinite (i.e. unbounded) sources, waiting for completion would not make much sense.
-  table_result.wait()
+    # Execution happens async by default, use wait() to attach to the execution in case all
+    # sources are finite (i.e. bounded).
+    # For infinite (i.e. unbounded) sources, waiting for completion would not make much sense.
+    table_result.wait()
 
-  print("Executing statement set asynchronous...")
+    print("Executing statement set asynchronous...")
 
-  # The API supports more than a single sink, you can also fan out to different tables while
-  # reading from a table once using a StatementSet:
-  statementSet = \
-    env.create_statement_set() \
-      .add_insert(
-        TARGET_TABLE1,
-        env.from_path("`examples`.`marketplace`.`orders`")
-        .select(col("product_id"), col("price"))
-    ) \
-      .add_insert(
-        TARGET_TABLE2,
-        env.from_path("`examples`.`marketplace`.`orders`")
-        .select(col("customer_id"), col("price"))
+    # The API supports more than a single sink, you can also fan out to different tables while
+    # reading from a table once using a StatementSet:
+    statementSet = (
+        env.create_statement_set()
+        .add_insert(
+            TARGET_TABLE1,
+            env.from_path("`examples`.`marketplace`.`orders`").select(
+                col("product_id"), col("price")
+            ),
+        )
+        .add_insert(
+            TARGET_TABLE2,
+            env.from_path("`examples`.`marketplace`.`orders`").select(
+                col("customer_id"), col("price")
+            ),
+        )
     )
 
-  # Executes a statement set that splits the 'orders' table into two tables,
-  # a 'product_id | price' table and a 'customer_id | price' one
-  statementSet.execute()
+    # Executes a statement set that splits the 'orders' table into two tables,
+    # a 'product_id | price' table and a 'customer_id | price' one
+    statementSet.execute()
 
-  print("Reading merged data written by background statement...")
+    print("Reading merged data written by background statement...")
 
-  # For this example, we read both target tables in again and union them into one output to
-  # verify that the data arrives
-  targetTable1 = \
-    env.from_path(TARGET_TABLE1) \
-      .select(concat(col("product_id"), lit(" event in "), lit(TARGET_TABLE1)))
-
-  targetTable2 = \
-    env.from_path(TARGET_TABLE2) \
-      .select(
-        concat(
-            col("customer_id").cast(DataTypes.STRING()),
-            lit(" event in "),
-            lit(TARGET_TABLE2))
+    # For this example, we read both target tables in again and union them into one output to
+    # verify that the data arrives
+    targetTable1 = env.from_path(TARGET_TABLE1).select(
+        concat(col("product_id"), lit(" event in "), lit(TARGET_TABLE1))
     )
 
-  targetTable1.union_all(targetTable2).alias("status").execute().print()
+    targetTable2 = env.from_path(TARGET_TABLE2).select(
+        concat(col("customer_id").cast(DataTypes.STRING()), lit(" event in "), lit(TARGET_TABLE2))
+    )
+
+    targetTable1.union_all(targetTable2).alias("status").execute().print()
+
 
 if __name__ == "__main__":
-  run()
+    run()
