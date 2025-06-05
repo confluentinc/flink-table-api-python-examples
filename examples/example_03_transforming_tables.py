@@ -19,11 +19,10 @@
 from pyflink.table import (TableEnvironment, DataTypes)
 from pyflink.table.confluent import ConfluentSettings
 from pyflink.table.expressions import col, row, with_all_columns
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # A table program example that demos how to transform data with the Table object.
 def run():
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
   env = TableEnvironment.create(settings)
 
   env.use_catalog("examples")
@@ -70,3 +69,6 @@ def run():
   # The result shows a joined table with the following columns:
   # customer_id | name | email | order_id | product_id | price | price_rounded
   joinedTable.execute().print()
+
+if __name__ == "__main__":
+  run()

@@ -19,11 +19,10 @@
 from pyflink.table import TableEnvironment
 from pyflink.table.confluent import ConfluentSettings
 from pyflink.table.expressions import col, row
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # A table program example that illustrates bounded and unbounded statements.
 def run():
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
   env = TableEnvironment.create(settings)
 
   env.use_catalog("examples")
@@ -57,3 +56,6 @@ def run():
     .select(col("user_id"), col("view_time").sum) \
     .execute() \
     .print()
+
+if __name__ == "__main__":
+  run()

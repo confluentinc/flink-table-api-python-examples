@@ -18,7 +18,6 @@
 
 from pyflink.table import (TableEnvironment, Schema, DataTypes, FormatDescriptor)
 from pyflink.table.confluent import ConfluentSettings, ConfluentTableDescriptor
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # NOTE: This example requires write access to a Kafka cluster. Fill out the
 # given variables below with target catalog/database if this is fine for you.
@@ -36,7 +35,7 @@ TARGET_TABLE2 = "MyExampleTable2"
 # A table program example that illustrates how to create a table backed
 # by a Kafka topic.
 def run():
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
 
   t_env = TableEnvironment.create(settings)
 
@@ -78,3 +77,6 @@ def run():
         'key.format' = 'json-registry',
         'value.format' = 'json-registry'
       )""" % TARGET_TABLE2)
+
+if __name__ == "__main__":
+  run()

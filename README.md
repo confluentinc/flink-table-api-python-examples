@@ -38,33 +38,33 @@ from pyflink.table.confluent import ConfluentSettings, ConfluentTools
 from pyflink.table import TableEnvironment, Row
 from pyflink.table.expressions import col, row
 
-# A table program...
-#   - uses Apache Flink's APIs
-#   - communicates to Confluent Cloud via REST calls
 def run():
-  # Set up the connection to Confluent Cloud
-  settings = ConfluentSettings.from_file("/cloud.properties")
-  env = TableEnvironment.create(settings)
+    # Setup connection properties to Confluent Cloud
+    settings = ConfluentSettings.from_global_variables()
+    env = TableEnvironment.create(settings)
 
   # Run your first Flink statement in Table API
-  env.from_elements([row("Hello world!")]).execute().print()
+    env.from_elements([row("Hello world!")]).execute().print()
 
-  # Or use SQL
-  env.sql_query("SELECT 'Hello world!'").execute().print()
+    # Or use SQL
+    env.sql_query("SELECT 'Hello world!'").execute().print()
 
-  # Structure your code with Table objects - the main ingredient of Table API.
-  table = env.from_path("examples.marketplace.clicks") \
-    .filter(col("user_agent").like("Mozilla%")) \
-    .select(col("click_id"), col("user_id"))
+    # Structure your code with Table objects - the main ingredient of Table API.
+    table = env.from_path("examples.marketplace.clicks") \
+        .filter(col("user_agent").like("Mozilla%")) \
+        .select(col("click_id"), col("user_id"))
 
-  table.print_schema()
-  print(table.explain())
+    table.print_schema()
+    print(table.explain())
 
-  # Use the provided tools to test on a subset of the streaming data
-  expected = ConfluentTools.collect_materialized_limit(table, 50)
-  actual = [Row(42, 500)]
-  if expected != actual:
-      print("Results don't match!")
+    # Use the provided tools to test on a subset of the streaming data
+    expected = ConfluentTools.collect_materialized_limit(table, 50)
+    actual = [Row(42, 500)]
+    if expected != actual:
+        print("Results don't match!")
+
+if __name__ == "__main__":
+    run()
 ```
 
 ## Getting Started
@@ -78,11 +78,13 @@ def run():
    for the region where you created your compute pool
 4. Optional: [Create a Kafka cluster](https://docs.confluent.io/cloud/current/clusters/create-cluster.html#manage-ak-clusters-on-ccloud)
    if you want to run examples that store data in Kafka
+5. Have the correct environment variables set as per [the documentation](https://docs.confluent.io/cloud/current/flink/reference/table-api.html#environment-variables)
+6. We recommend using a tool like [uv](https://docs.astral.sh/uv/) to manage your Python versions and environments and Python 3.9-3.11 are the only versions currently supported.
 
 ### Run Examples
 
-All example files are located in `flink_table_api_python/examples/table`. Each file contains a `run()`
-function with a table program that can be executed individually. Every example program covers a different topic to learn
+All example files are located in `examples`. Each file contains a `run()`
+function that can be executed directly or in `__main__`. Each has multiple table programs that will be executed individually. Every example program covers a different topic to learn
 more about how Table API can be used. It is recommended to go through the examples in the defined order as they partially
 build on top of each other.
 
@@ -96,20 +98,25 @@ Change the current directory.
 cd flink-table-api-python-examples
 ```
 
-Use [poetry](https://python-poetry.org/) to build a virtual environment containing all required dependencies and project files.
-
-```bash
-poetry install
-```
+We recommend using [uv](https://docs.astral.sh/uv/) to run the scripts, will automatically create a virtualenv with the required dependencies.
 
 **Note**: Flink's Python API communicates with a Java process under the hood. Make sure you also have at least Java 11
 installed. Check that your `JAVA_HOME` environment variable is correctly set. Only checking `java -version` might not
 be enough.
 
+```
+echo $JAVA_HOME
+```
+
+If required install openjdk and export the JAVA_HOME
+```bash
+brew install openjdk && export JAVA_HOME=$(/usr/libexec/java_home) && echo $JAVA_HOME
+```
+
 Run an example script. No worries the program is read-only so it won't affect your existing
 Kafka clusters. All results will be printed to the console.
 ```bash
-poetry run example_00_hello_world
+uv run examples/example_00_hello_world
 ```
 
 An output similar to the following means that you are able to run the examples:
@@ -118,20 +125,27 @@ io.confluent.flink.plugin.ConfluentFlinkException: Parameter 'client.organizatio
 ```
 Configuration will be covered in the next section.
 
-### Configure the `cloud.properties` File
+### Configure the settings parameters in the `ConfluentSettings` class.
 
-The Table API plugin needs a set of configuration options for establishing a connection to Confluent Cloud.
-
-For experimenting with Table API, configuration with a properties file might be the most convenient option.
-The examples read from this file by default.
-
-Update the file under `config/cloud.properties` with your Confluent Cloud information.
+The Table API plugin needs a set of configuration options for establishing a connection to Confluent Cloud. These can be set as a properties file, passed in via the command line as arguments, defined in the code or via the environment variables. This example uses the environment variables. For more details, please see the [documentation](https://docs.confluent.io/cloud/current/flink/reference/table-api.html#confluentsettings-class).
 
 All required information can be found in the web UI of Confluent's Cloud Console:
-- `client.organization-id` from [**Menu** → **Settings** → **Organizations**](https://confluent.cloud/settings/organizations)
-- `client.environment-id` from [**Menu** → **Environments**](https://confluent.cloud/environments)
-- `client.cloud`, `client.region`, `client.compute-pool-id` from [**Menu** → **Environments**](https://confluent.cloud/environments) → **your environment** → **Flink** → **your compute pool**
-- `client.flink-api-key`, `client.flink-api-secret` from [**Menu** → **Settings** → **API keys**](https://confluent.cloud/settings/api-keys)
+- `client.organization-id|ORG_ID` from [**Menu** → **Settings** → **Organizations**](https://confluent.cloud/settings/organizations)
+- `client.environment-id|ENV_ID` from [**Menu** → **Environments**](https://confluent.cloud/environments)
+- `client.cloud|CLOUD_PROVIDER`, `client.region|CLOUD_REGION`, `client.compute-pool-id|COMPUTE_POOL_ID` from [**Menu** → **Environments**](https://confluent.cloud/environments) → **your environment** → **Flink** → **your compute pool**
+- `client.flink-api-key|FLINK_API_KEY`, `client.flink-api-secret|FLINK_API_SECRET` from [**Menu** → **Settings** → **API keys**](https://confluent.cloud/settings/api-keys)
+
+Export the environment variables as shown below:
+
+```bash
+export CLOUD_PROVIDER="<my_cloud>"
+export CLOUD_REGION="<my_region>"
+export FLINK_API_KEY="<my_key>"
+export FLINK_API_SECRET="<my_secret>"
+export ORG_ID="<my_organization>"
+export ENV_ID="<my_environment>"
+export COMPUTE_POOL_ID="<my_compute_pool>"
+```
 
 Examples should be runnable after setting all configuration options correctly.
 
@@ -140,15 +154,13 @@ Examples should be runnable after setting all configuration options correctly.
 For convenience, the repository also contains an init script for playing around with
 Table API in an interactive manner.
 
-1. Run `poetry shell` to start a shell within the poetry virtualenv
+1. Create a virtualenv with `uv sync` and activate it with `source .venv/bin/activate`.
 
-2. Point to the `cloud.properties` file: `export FLINK_PROPERTIES=./config/cloud.properties`
+2. Run `python -i start_pyshell.py` to start an interactive repl to explore Table API.
 
-3. Start python with `python -i setup_pyshell.py`
+3. The `TableEnvironment` is pre-initialized from environment variables and available under `env`.
 
-4. The `TableEnvironment` is pre-initialized from environment variables and available under `env`.
-
-5. Run your first "Hello world!" using `env.execute_sql("SELECT 'Hello world!'").print()`
+4. Run your first "Hello world!" using `env.execute_sql("SELECT 'Hello world!'").print()`
 
 ## Configuration
 

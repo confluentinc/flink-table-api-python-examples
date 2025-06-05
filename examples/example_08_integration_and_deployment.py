@@ -21,7 +21,6 @@ import uuid
 from pyflink.table import (TableEnvironment)
 from pyflink.table.confluent import ConfluentSettings, ConfluentTools
 from pyflink.table.expressions import col, lit, with_all_columns
-from flink_table_api_python.settings import CLOUD_PROPERTIES_PATH
 
 # NOTE: This example requires write access to a Kafka cluster. Fill out the
 # given variables below with target catalog/database if this is fine for you.
@@ -53,9 +52,9 @@ SQL = "SELECT brand, COUNT(*) AS vendors FROM ProductsMock %s GROUP BY brand"
 #
 # A CI/CD workflow could execute the following:
 #
-#     poetry run example_08_integration_and_deployment setup
-#     poetry run example_08_integration_and_deployment test
-#     poetry run example_08_integration_and_deployment deploy
+#     python example_08_integration_and_deployment setup
+#     python example_08_integration_and_deployment test
+#     python example_08_integration_and_deployment deploy
 #
 # NOTE: The example submits an unbounded background statement. Make sure
 # to stop the statement in the Web UI afterward to clean up resources.
@@ -80,7 +79,7 @@ def run(args=None):
 
   mode = args[0]
 
-  settings = ConfluentSettings.from_file(CLOUD_PROPERTIES_PATH)
+  settings = ConfluentSettings.from_global_variables()
   env = TableEnvironment.create(settings)
   env.use_catalog(TARGET_CATALOG)
   env.use_database(TARGET_DATABASE)
@@ -200,3 +199,6 @@ def _deploy_program(env: TableEnvironment):
   finalName = ConfluentTools.get_statement_name(result)
 
   print("Statement has been deployed as: " + finalName)
+
+if __name__ == "__main__":
+  run()
