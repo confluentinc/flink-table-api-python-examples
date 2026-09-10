@@ -34,25 +34,28 @@ The following code shows how a Table API program is structured. Subsequent secti
 can use the examples of this repository to play around with Flink on Confluent Cloud.
 
 ```python
-from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table import TableEnvironment, Row
-from pyflink.table.expressions import col, row
+from confluent_pyflink.table.utils import ConfluentSettings, ConfluentTools
+from confluent_pyflink.table import TableEnvironment, Row
+from confluent_pyflink.table.expressions import col, row
+
 
 def run():
     # Setup connection properties to Confluent Cloud
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
 
-  # Run your first Flink statement in Table API
+    # Run your first Flink statement in Table API
     env.from_elements([row("Hello world!")]).execute().print()
 
     # Or use SQL
     env.sql_query("SELECT 'Hello world!'").execute().print()
 
     # Structure your code with Table objects - the main ingredient of Table API.
-    table = env.from_path("examples.marketplace.clicks") \
-        .filter(col("user_agent").like("Mozilla%")) \
+    table = (
+        env.from_path("examples.marketplace.clicks")
+        .filter(col("user_agent").like("Mozilla%"))
         .select(col("click_id"), col("user_id"))
+    )
 
     table.print_schema()
     print(table.explain())
@@ -62,6 +65,7 @@ def run():
     actual = [Row(42, 500)]
     if expected != actual:
         print("Results don't match!")
+
 
 if __name__ == "__main__":
     run()
@@ -121,33 +125,34 @@ uv run examples/example_00_hello_world
 
 An output similar to the following means that you are able to run the examples:
 ```text
-io.confluent.flink.plugin.ConfluentFlinkException: Parameter 'client.organization-id' not found.
+ConfluentSettingsValidationError: 5 validation errors for ConfluentSettings
+Missing the following required configuration keys: org_id, env_id, compute_pool_id, cloud_provider, cloud_region
 ```
 Configuration will be covered in the next section.
 
 ### Configure the settings parameters in the `ConfluentSettings` class.
 
-The Table API plugin needs a set of configuration options for establishing a connection to Confluent Cloud. These can be set as a properties file, passed in via the command line as arguments, defined in the code or via the environment variables. This example uses the environment variables. For more details, please see the [documentation](https://docs.confluent.io/cloud/current/flink/reference/table-api.html#confluentsettings-class).
+`ConfluentSettings` needs a set of configuration options for establishing a connection to Confluent Cloud. These can be set via environment variables, a `.env` file, a JSON/YAML file, or as keyword arguments in code. This example uses the environment variables. For more details, please see the [documentation](https://docs.confluent.io/cloud/current/flink/reference/table-api.html#confluentsettings-class).
 
 All required information can be found in the web UI of Confluent's Cloud Console:
-- `client.organization-id|ORG_ID` from [**Menu** → **Settings** → **Organizations**](https://confluent.cloud/settings/organizations)
-- `client.environment-id|ENV_ID` from [**Menu** → **Environments**](https://confluent.cloud/environments)
-- `client.cloud|CLOUD_PROVIDER`, `client.region|CLOUD_REGION`, `client.compute-pool-id|COMPUTE_POOL_ID` from [**Menu** → **Environments**](https://confluent.cloud/environments) → **your environment** → **Flink** → **your compute pool**
-- `client.flink-api-key|FLINK_API_KEY`, `client.flink-api-secret|FLINK_API_SECRET` from [**Menu** → **Settings** → **API keys**](https://confluent.cloud/settings/api-keys)
+- `CONFLUENT_ORG_ID` from [**Menu** → **Settings** → **Organizations**](https://confluent.cloud/settings/organizations)
+- `CONFLUENT_ENV_ID` from [**Menu** → **Environments**](https://confluent.cloud/environments)
+- `CONFLUENT_CLOUD_PROVIDER`, `CONFLUENT_CLOUD_REGION`, `CONFLUENT_COMPUTE_POOL_ID` from [**Menu** → **Environments**](https://confluent.cloud/environments) → **your environment** → **Flink** → **your compute pool**
+- `CONFLUENT_GLOBAL_API_KEY`, `CONFLUENT_GLOBAL_API_SECRET` from [**Menu** → **Settings** → **API keys**](https://confluent.cloud/settings/api-keys) (a Cloud API key that covers both Flink and Artifact access)
 
 Export the environment variables as shown below:
 
 ```bash
-export CLOUD_PROVIDER="<my_cloud>"
-export CLOUD_REGION="<my_region>"
-export FLINK_API_KEY="<my_key>"
-export FLINK_API_SECRET="<my_secret>"
-export ORG_ID="<my_organization>"
-export ENV_ID="<my_environment>"
-export COMPUTE_POOL_ID="<my_compute_pool>"
+export CONFLUENT_CLOUD_PROVIDER="<my_cloud>"
+export CONFLUENT_CLOUD_REGION="<my_region>"
+export CONFLUENT_GLOBAL_API_KEY="<my_key>"
+export CONFLUENT_GLOBAL_API_SECRET="<my_secret>"
+export CONFLUENT_ORG_ID="<my_organization>"
+export CONFLUENT_ENV_ID="<my_environment>"
+export CONFLUENT_COMPUTE_POOL_ID="<my_compute_pool>"
 ```
 
-Examples should be runnable after setting all configuration options correctly.
+Alternatively, copy `.env.example` to `.env` and fill in the same values. Examples should be runnable after setting all configuration options correctly.
 
 ### Table API Playground using Python Interactive Shell
 
@@ -166,173 +171,210 @@ Table API in an interactive manner.
 
 The Table API plugin needs a set of configuration options for establishing a connection to Confluent Cloud.
 
-The `ConfluentSettings` class is a utility for providing configuration options from various sources.
-
-For production, external input, code, and environment variables can be combined.
+`ConfluentSettings` is a Pydantic settings model. Values are resolved from keyword arguments, environment variables (with a `CONFLUENT_` prefix), a `.env` file, or a JSON/YAML file, and these sources can be combined.
 
 Precedence order (highest to lowest):
-1. Properties File
-2. Code
-3. Environment Variables
+1. Keyword arguments passed in code — this includes everything loaded from a file via `from_file`, since the file's contents and any overrides are applied as constructor arguments. A value set in a JSON/YAML file therefore takes precedence over an environment variable of the same name.
+2. Environment variables (`CONFLUENT_*`)
+3. `.env` file in the working directory
 
 A multi-layered configuration can look like:
 ```python
-from pyflink.table.confluent import ConfluentSettings
-from pyflink.table import TableEnvironment
+from confluent_pyflink.table.utils import ConfluentSettings
+from confluent_pyflink.table import TableEnvironment
+
 
 def run():
-  # Properties file might set cloud, region, org, env, and compute pool.
-  # Environment variables might pass key and secret.
+    # A JSON/YAML file might set cloud, region, org, env, and compute pool.
+    # Environment variables (CONFLUENT_*) can supply the remaining values, such
+    # as the API key and secret.
 
-  # Code sets the session name and SQL-specific options.
-  settings = ConfluentSettings.new_builder_from_file(...) \
-    .set_context_name("MyTableProgram") \
-    .set_option("sql.local-time-zone", "UTC") \
-    .build()
+    # Keyword overrides take precedence over both the file and the environment.
+    settings = ConfluentSettings.from_file(
+        "/path/to/cloud.json",
+        application_name="my-table-program",
+    )
 
-  env = TableEnvironment.create(settings)
+    env = TableEnvironment.create(settings)
 ```
 
-### Via Properties File
+### Via a Configuration File
 
-Store options (or some options) in a `cloud.properties` file:
+Store options (or some options) in a JSON or YAML file, keyed by setting name. For example `cloud.json`:
 
-```properties
-# Cloud region
-client.cloud=aws
-client.region=us-east-1
-
-# Access & compute resources
-client.flink-api-key=key
-client.flink-api-secret=secret
-client.organization-id=b0b21724-4586-4a07-b787-d0bb5aacbf87
-client.environment-id=env-z3y2x1
-client.compute-pool-id=lfcp-8m03rm
+```json
+{
+  "cloud_provider": "aws",
+  "cloud_region": "us-east-1",
+  "global_api_key": "key",
+  "global_api_secret": "secret",
+  "org_id": "b0b21724-4586-4a07-b787-d0bb5aacbf87",
+  "env_id": "env-z3y2x1",
+  "compute_pool_id": "lfcp-8m03rm"
+}
 ```
 
-Reference the `cloud.properties` file:
+Reference the file:
 ```python
-from pyflink.table.confluent import ConfluentSettings
+from confluent_pyflink.table.utils import ConfluentSettings
 
-# Arbitrary file location in file system
-settings = ConfluentSettings.from_file("/path/to/cloud.properties")
+# Arbitrary file location in the file system
+settings = ConfluentSettings.from_file("/path/to/cloud.json")
 ```
-
-A path to a properties file can also be specified by setting the environment variable `FLINK_PROPERTIES`.
 
 ### Via Code
 
-Pass all options (or some options) in code:
+Pass all options (or some options) as keyword arguments in code:
 
 ```python
-from pyflink.table.confluent import ConfluentSettings
+from confluent_pyflink.table.utils import ConfluentSettings
 
-settings = ConfluentSettings.new_builder() \
-  .set_cloud("aws") \
-  .set_region("us-east-1") \
-  .set_flink_api_key("key") \
-  .set_flink_api_secret("secret") \
-  .set_organization_id("b0b21724-4586-4a07-b787-d0bb5aacbf87") \
-  .set_environment_id("env-z3y2x1") \
-  .set_compute_pool_id("lfcp-8m03rm") \
-  .build()
+settings = ConfluentSettings(
+    cloud_provider="aws",
+    cloud_region="us-east-1",
+    global_api_key="key",
+    global_api_secret="secret",
+    org_id="b0b21724-4586-4a07-b787-d0bb5aacbf87",
+    env_id="env-z3y2x1",
+    compute_pool_id="lfcp-8m03rm",
+)
 ```
 
 ### Via Environment Variables
 
-Pass all options (or some options) as variables:
+Pass all options (or some options) as `CONFLUENT_`-prefixed variables:
 
 ```bash
-export CLOUD_PROVIDER="aws"
-export CLOUD_REGION="us-east-1"
-export FLINK_API_KEY="key"
-export FLINK_API_SECRET="secret"
-export ORG_ID="b0b21724-4586-4a07-b787-d0bb5aacbf87"
-export ENV_ID="env-z3y2x1"
-export COMPUTE_POOL_ID="lfcp-8m03rm"
-
-poetry run example
+export CONFLUENT_CLOUD_PROVIDER="aws"
+export CONFLUENT_CLOUD_REGION="us-east-1"
+export CONFLUENT_GLOBAL_API_KEY="key"
+export CONFLUENT_GLOBAL_API_SECRET="secret"
+export CONFLUENT_ORG_ID="b0b21724-4586-4a07-b787-d0bb5aacbf87"
+export CONFLUENT_ENV_ID="env-z3y2x1"
+export CONFLUENT_COMPUTE_POOL_ID="lfcp-8m03rm"
 ```
 
-In code call:
+The same variables can instead be placed in a `.env` file in the working directory. In code call:
 ```python
-from pyflink.table.confluent import ConfluentSettings
+from confluent_pyflink.table.utils import ConfluentSettings
 
-settings = ConfluentSettings.from_global_variables()
+# Reads the CONFLUENT_* environment variables (and a .env file if present)
+settings = ConfluentSettings()
 ```
-
-A path to a properties file can also be specified by setting the environment variable `FLINK_PROPERTIES`.
 
 ### Configuration Options
 
-The following configuration needs to be provided:
+Every setting can be provided as a keyword argument (`snake_case`), an environment variable
+(`CONFLUENT_` + upper snake case), or a key in a JSON/YAML file.
 
-| Property key              | Environment variable | Required | Comment                                                                      |
-|---------------------------|----------------------|----------|------------------------------------------------------------------------------|
-| `client.cloud`            | `CLOUD_PROVIDER`     | Y        | Confluent identifier for a cloud provider. For example: `aws`                |
-| `client.region`           | `CLOUD_REGION`       | Y        | Confluent identifier for a cloud provider's region. For example: `us-east-1` |
-| `client.flink-api-key`    | `FLINK_API_KEY`      | Y        | API key for Flink access.                                                    |
-| `client.flink-api-secret` | `FLINK_API_SECRET`   | Y        | API secret for Flink access.                                                 |
-| `client.organization-id`  | `ORG_ID`             | Y        | ID of the organization. For example: `b0b21724-4586-4a07-b787-d0bb5aacbf87`  |
-| `client.environment-id`   | `ENV_ID`             | Y        | ID of the environment. For example: `env-z3y2x1`                             |
-| `client.compute-pool-id`  | `COMPUTE_POOL_ID`    | Y        | ID of the compute pool. For example: `lfcp-8m03rm`                           |
+#### Required connection settings
 
-Additional configuration:
+| Setting           | Environment variable        | Required | Comment                                                                     |
+|-------------------|-----------------------------|----------|-----------------------------------------------------------------------------|
+| `cloud_provider`  | `CONFLUENT_CLOUD_PROVIDER`  | Y        | Confluent identifier for a cloud provider. One of: `aws`, `gcp`, `azure`    |
+| `cloud_region`    | `CONFLUENT_CLOUD_REGION`    | Y        | Cloud provider's region. For example: `us-east-1`                           |
+| `org_id`          | `CONFLUENT_ORG_ID`          | Y        | ID of the organization. For example: `b0b21724-4586-4a07-b787-d0bb5aacbf87` |
+| `env_id`          | `CONFLUENT_ENV_ID`          | Y        | ID of the environment. For example: `env-z3y2x1`                            |
+| `compute_pool_id` | `CONFLUENT_COMPUTE_POOL_ID` | Y        | ID of the compute pool. For example: `lfcp-8m03rm`                          |
 
-| Property key               | Environment variable | Required | Comment                                                                                                  |
-|----------------------------|----------------------|----------|----------------------------------------------------------------------------------------------------------|
-| `client.endpoint-template` | `ENDPOINT_TEMPLATE`  | N        | A template for the endpoint URL. For example: `https://flinkpls-dom123.{region}.{cloud}.confluent.cloud` |
-| `client.principal-id`      | `PRINCIPAL_ID`       | N        | Principal that runs submitted statements. For example: `sa-23kgz4` (for a service account)               |
-| `client.context`           |                      | N        | A name for this Table API session. For example: `my_table_program`                                       |
-| `client.statement-name`    |                      | N        | Unique name for statement submission. By default, generated using a UUID.                                |
-| `client.rest-endpoint`     | `REST_ENDPOINT`      | N        | URL to the REST endpoint. For example: `proxyto.confluent.cloud`                                         |
-| `client.catalog-cache`     |                      | N        | Expiration time for catalog objects. For example: '5 min'. '1 min' by default. '0' disables the caching. |
+#### Authentication
+
+`auth_mode` selects how the client authenticates; the default is `api-key`.
+
+| Setting     | Environment variable  | Required | Comment                                                                    |
+|-------------|-----------------------|----------|----------------------------------------------------------------------------|
+| `auth_mode` | `CONFLUENT_AUTH_MODE` | N        | `api-key` (default), `oauth-client-credentials`, or `oauth-static-token`.  |
+
+For `api-key` auth (the default), the recommended option is a single **global** API key/secret. It covers both Flink and Artifact (UDF upload) access, and is what the examples above use:
+
+| Setting             | Environment variable          | Required | Comment                                                              |
+|---------------------|-------------------------------|----------|----------------------------------------------------------------------|
+| `global_api_key`    | `CONFLUENT_GLOBAL_API_KEY`    | Y¹       | Key for both Flink and Artifact access. **Recommended default.**     |
+| `global_api_secret` | `CONFLUENT_GLOBAL_API_SECRET` | Y¹       | Secret for both Flink and Artifact access. **Recommended default.**  |
+
+If a global key/secret is not provided, dedicated keys are used instead — `flink_api_key`/`flink_api_secret` for Flink access (required), and optionally `artifact_api_key`/`artifact_api_secret` for UDF uploads:
+
+| Setting               | Environment variable            | Required | Comment                                     |
+|-----------------------|---------------------------------|----------|---------------------------------------------|
+| `flink_api_key`       | `CONFLUENT_FLINK_API_KEY`       | Y²       | API key for Flink access.                   |
+| `flink_api_secret`    | `CONFLUENT_FLINK_API_SECRET`    | Y²       | API secret for Flink access.                |
+| `artifact_api_key`    | `CONFLUENT_ARTIFACT_API_KEY`    | N        | Key for Artifact creation (UDF uploads).    |
+| `artifact_api_secret` | `CONFLUENT_ARTIFACT_API_SECRET` | N        | Secret for Artifact creation (UDF uploads). |
+
+¹ Required for `api-key` auth unless the dedicated Flink keys below are provided instead.
+² Required when a global key/secret is not set.
+
+For OAuth auth (`oauth-client-credentials` or `oauth-static-token`):
+
+| Setting                        | Environment variable                     | Required | Comment                                                                    |
+|--------------------------------|------------------------------------------|----------|----------------------------------------------------------------------------|
+| `oauth_identity_pool_id`       | `CONFLUENT_OAUTH_IDENTITY_POOL_ID`       | Y²       | Confluent Cloud identity pool ID. For example: `pool-xxxxx`.               |
+| `oauth_external_token_url`     | `CONFLUENT_OAUTH_EXTERNAL_TOKEN_URL`     | Y³       | External IdP OAuth 2.0 token endpoint URL.                                 |
+| `oauth_external_client_id`     | `CONFLUENT_OAUTH_EXTERNAL_CLIENT_ID`     | Y³       | Client ID registered with the external IdP.                               |
+| `oauth_external_client_secret` | `CONFLUENT_OAUTH_EXTERNAL_CLIENT_SECRET` | Y³       | Client secret registered with the external IdP.                           |
+| `oauth_external_token_scope`   | `CONFLUENT_OAUTH_EXTERNAL_TOKEN_SCOPE`   | N        | OAuth scope to request from the IdP (IdP-dependent).                       |
+| `oauth_external_access_token`  | `CONFLUENT_OAUTH_EXTERNAL_ACCESS_TOKEN`  | Y⁴       | Pre-issued OAuth bearer token (not refreshed by the client).              |
+
+² Required for any OAuth mode.
+³ Required for `oauth-client-credentials`.
+⁴ Required for `oauth-static-token`.
+
+#### Additional settings
+
+| Setting                      | Environment variable                   | Required | Comment                                                                                                   |
+|------------------------------|----------------------------------------|----------|-----------------------------------------------------------------------------------------------------------|
+| `application_name`           | `CONFLUENT_APPLICATION_NAME`           | N        | Namespace/prefix for statement names submitted by this application.                                       |
+| `statement_name`             | `CONFLUENT_STATEMENT_NAME`             | N        | Name for the next statement submission. By default, generated using a UUID.                               |
+| `principal_id`               | `CONFLUENT_PRINCIPAL_ID`               | N        | Principal that runs submitted statements. For example: `sa-23kgz4` (service account).                     |
+| `on_conflict`                | `CONFLUENT_ON_CONFLICT`                | N        | `fail` (default) or `replace`. `replace` requires `application_name`.                                     |
+| `catalog_cache`              | `CONFLUENT_CATALOG_CACHE`              | N        | Expiration for catalog objects. Default `1 min`; `0` disables caching. See the duration note below.       |
+| `timeout`                    | `CONFLUENT_TIMEOUT`                    | N        | Max wait for statement lifecycle actions. Default `15 min`. See the duration note below.                  |
+| `endpoint_template`          | `CONFLUENT_ENDPOINT_TEMPLATE`          | N        | Template for the endpoint URL. Default `https://flink.{region}.{cloud}.confluent.cloud`.                  |
+| `artifact_endpoint_template` | `CONFLUENT_ARTIFACT_ENDPOINT_TEMPLATE` | N        | Template for the artifact endpoint URL. Default `https://api.confluent.cloud`.                            |
+| `options`                    | `CONFLUENT_OPTIONS`                    | N        | Extra Confluent options not exposed as dedicated fields (a dict; does not support Flink-native options).  |
+| `http_user_agent`            | `CONFLUENT_HTTP_USER_AGENT`            | N        | Custom HTTP User-Agent header for API requests (advanced).                                                |
+
+> **Duration format:** `catalog_cache` and `timeout` are `timedelta` values. As a keyword argument pass a `datetime.timedelta`.
+  As an environment variable or file value use an ISO-8601 duration (e.g. `PT5M`, `PT15M`) or `HH:MM:SS` (e.g. `0:05:00`).
 
 ### Endpoint Configuration
 
-The Confluent Flink plugin provides options to configure endpoints for connecting to Confluent Cloud services. **The template-based approach is the recommended method.**
+`ConfluentSettings` provides options to configure endpoints for connecting to Confluent Cloud services.
 
-### `client.endpoint-template`
+### `endpoint_template`
 
 This option provides a template for constructing the Flink statement API endpoint URL.
 
 - **Default**: `https://flink.{region}.{cloud}.confluent.cloud`
 - **Example**: `https://flinkpls-dom123.{region}.{cloud}.confluent.cloud`
 - **Usage**: The template supports placeholders `{region}` and `{cloud}` that are replaced with the configured region and cloud provider values.
-- **Environment Variable**: `ENDPOINT_TEMPLATE`
+- **Environment Variable**: `CONFLUENT_ENDPOINT_TEMPLATE`
 
-### `client.rest-endpoint` (Discouraged)
+### `artifact_endpoint_template`
 
-This option specifies the base domain for REST API calls to Confluent Cloud. While still supported, using the template-based configuration above is preferred.
+Template for the artifact (UDF upload) endpoint URL, using the same `{region}`/`{cloud}` placeholders.
 
-- **Default**: No default value
-- **Example**: `proxy.confluent.cloud`
-- **Usage**: When specified, the plugin constructs the full Flink statement API endpoint URL as `https://flink.{region}.{cloud}.{rest-endpoint}` where `{region}` and `{cloud}` are replaced with the configured region and cloud provider values.
-- **Important**: `client.endpoint-template` and `client.rest-endpoint` are mutually exclusive. If both are set, an exception is thrown.
-- **Environment Variable**: `REST_ENDPOINT`
+- **Default**: `https://api.confluent.cloud`
+- **Environment Variable**: `CONFLUENT_ARTIFACT_ENDPOINT_TEMPLATE`
 
-### Relationship and Default Behavior
-
-1. **Mutual Exclusivity**:
-    - `client.endpoint-template` and `client.rest-endpoint` cannot be set simultaneously
-
-2. **Default Behavior**:
-    - If neither `client.rest-endpoint` nor `client.endpoint-template` is configured, the default template `https://flink.{region}.{cloud}.confluent.cloud` is used for statement API
-    - If endpoint templates are used, each endpoint is constructed independently with the provided templates
+Both endpoints fall back to their defaults when not set: `https://flink.{region}.{cloud}.confluent.cloud`
+for the statement API and `https://api.confluent.cloud` for artifacts.
 
 ### Example
 
 Here's a simple example showing how to configure an endpoint:
 
 ```python
-# cloud.properties:
-# client.region=us-east-1
-# client.cloud=aws
-# client.endpoint-template=https://flinkpls-dom123.{region}.{cloud}.confluent.cloud
+# cloud.json:
+# {
+#   "cloud_region": "us-east-1",
+#   "cloud_provider": "aws",
+#   "endpoint_template": "https://flinkpls-dom123.{region}.{cloud}.confluent.cloud"
+# }
 
 # Resolved endpoints:
 # - Statement API: https://flinkpls-dom123.us-east-1.aws.confluent.cloud
-settings = ConfluentSettings.from_file("/cloud.properties")
+settings = ConfluentSettings.from_file("/cloud.json")
 ```
 
 ## Documentation for Confluent Utilities
@@ -355,10 +397,10 @@ reached.
 
 Examples:
 ```python
-from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table import TableEnvironment
+from confluent_pyflink.table.utils import ConfluentSettings, ConfluentTools
+from confluent_pyflink.table import TableEnvironment
 
-settings = ConfluentSettings.from_global_variables()
+settings = ConfluentSettings()
 env = TableEnvironment.create(settings)
 # On Table object
 table = env.from_path("examples.marketplace.customers")
@@ -392,10 +434,10 @@ potentially unbounded, it will stop fetching after the desired amount of rows ha
 reached.
 
 ```python
-from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table import TableEnvironment
+from confluent_pyflink.table.utils import ConfluentSettings, ConfluentTools
+from confluent_pyflink.table import TableEnvironment
 
-settings = ConfluentSettings.from_global_variables()
+settings = ConfluentSettings()
 env = TableEnvironment.create(settings)
 # On Table object
 table = env.from_path("examples.marketplace.customers")
@@ -427,7 +469,10 @@ statement_name = ConfluentTools.get_statement_name(table_result)
 ConfluentTools.stop_statement(table_result)
 
 # Based on statement name
-ConfluentTools.stop_statement_by_name(env, "table-api-2024-03-21-150457-36e0dbb2e366-sql")
+handle = ConfluentTools.get_statement_handle_by_name(
+    env, "table-api-2024-03-21-150457-36e0dbb2e366-sql"
+)
+handle.stop()
 ```
 
 ### Confluent Table Descriptor
@@ -437,21 +482,25 @@ A table descriptor for creating tables located in Confluent Cloud programmatical
 Compared to the regular Flink one, this class adds support for Confluent's system columns
 and convenience methods for working with Confluent tables.
 
-`for_managed` corresponds to `TableDescriptor.for_conector("confluent")`.
+`for_managed` corresponds to `TableDescriptor.for_connector("confluent")`.
 
 ```python
-from pyflink.table.confluent import ConfluentTableDescriptor
-from pyflink.table import Schema, DataTypes
-from pyflink.table.expressions import col, lit
+from confluent_pyflink.table import Schema, DataTypes, TableDescriptor
+from confluent_pyflink.table.expressions import col, lit
 
-descriptor = ConfluentTableDescriptor.for_managed() \
-  .schema(
-    Schema.new_builder()
-      .column("i", DataTypes.INT())
-      .column("s", DataTypes.INT())
-      .watermark("$rowtime", col("$rowtime").minus(lit(5).seconds)) # Access $rowtime system column
-      .build()) \
-  .build()
+descriptor = (
+    TableDescriptor.for_managed()
+    .schema(
+        Schema.new_builder()
+        .column("i", DataTypes.INT())
+        .column("s", DataTypes.INT())
+        .watermark(
+            "$rowtime", col("$rowtime").minus(lit(5).seconds)
+        )  # Access $rowtime system column
+        .build()
+    )
+    .build()
+)
 
 env.createTable("t1", descriptor)
 ```
@@ -488,19 +537,19 @@ The following features are currently not supported:
 - String concatenation with `.plus` leads to errors. Use `Expressions.concat`.
 - Selecting `.rowtime` in windows leads to errors.
 - Using `.limit()` can lead to errors.
-- Python API is not fully on par with the Java API. The API lacks support for: TablePipeline, ResolvedSchema
+- Python API is not fully on par with the Java API. The API lacks support for: TablePipeline
 
 ### Supported API
 
 The following API methods are considered stable and ready to be used:
 
 ```text
-// TableEnvironment
-TableEnvironment.create_statement_st()
-TableEnvironment.create_table(String, TableDescriptor)
-TableEnvironment.execute_sql(String)
-TableEnvironment.explain_sql(String)
-TableEnvironment.from_path(String)
+// TableEnvironment  (optional args shown as name=...)
+TableEnvironment.create_statement_set()
+TableEnvironment.create_table(path, descriptor)
+TableEnvironment.execute_sql(stmt)
+TableEnvironment.explain_sql(stmt)
+TableEnvironment.from_path(path)
 TableEnvironment.get_config()
 TableEnvironment.get_current_catalog()
 TableEnvironment.get_current_database()
@@ -509,78 +558,86 @@ TableEnvironment.list_databases()
 TableEnvironment.list_functions()
 TableEnvironment.list_tables()
 TableEnvironment.list_views()
-TableEnvironment.sql_query(String)
-TableEnvironment.use_catalog(String)
-TableEnvironment.use_database(String)
+TableEnvironment.sql_query(query)
+TableEnvironment.use_catalog(catalog_name)
+TableEnvironment.use_database(database_name)
 
 // from_elements works partially, it should be safe to use it in combination with
-// pyflink.table.expression, passing Python objects is not supported
-TableEnvironment.from_elements(...)
+// confluent_pyflink.table.expressions, passing Python objects is not supported
+TableEnvironment.from_elements(elements, schema=...)
 
 // Table: SQL equivalents
-Table.select(...)
-Table.alias(...)
-Table.filter(...)
-Table.where(...)
-Table.group_by(...)
+Table.select(*fields)
+Table.alias(field, *fields)
+Table.filter(predicate)
+Table.where(predicate)
+Table.group_by(*fields)
 Table.distinct()
-Table.join(...)
-Table.left_outer_join(...)
-Table.right_outer_join(...)
-Table.full_outer_join(...)
-Table.minus(...)
-Table.minus_all(...)
-Table.union(...)
-Table.union_all(...)
-Table.intersect(...)
-Table.intersect_all(...)
-Table.order_by(...)
-Table.offset(...)
-Table.fetch(...)
-Table.limit(...)
-Table.window(...)
+Table.join(right, join_predicate=...)
+Table.left_outer_join(right, join_predicate=...)
+Table.right_outer_join(right, join_predicate)
+Table.full_outer_join(right, join_predicate)
+Table.minus(right)
+Table.minus_all(right)
+Table.union(right)
+Table.union_all(right)
+Table.intersect(right)
+Table.intersect_all(right)
+Table.order_by(*fields)
+Table.offset(offset)
+Table.fetch(fetch)
+Table.limit(fetch, offset=...)
+Table.window(group_window)
+Table.over_window(*over_windows)
 
 // Table: API extensions
 Table.print_schema()
-Table.add_columns(...)
-Table.add_or_replace_columns(...)
-Table.rename_columns(...)
-Table.drop_columns(...)
+Table.get_resolved_schema()
+Table.add_columns(*fields)
+Table.add_or_replace_columns(*fields)
+Table.rename_columns(*fields)
+Table.drop_columns(*fields)
 Table.explain()
+Table.print_explain(*extra_details)
 Table.execute()
-Table.execute_insert(...)
+Table.execute_insert(target_path, overwrite=...)
+Table.to_changelog(...)
+Table.from_changelog(...)
 
 // StatementSet
 StatementSet.execute()
-StatementSet.add_insert(...)
-StatementSet.add_insert_sql(...)
+StatementSet.explain()
+StatementSet.print_explain(*extra_details)
+StatementSet.add_insert(target_path, table, overwrite=...)
+StatementSet.add_insert_sql(stmt)
 
 // TableResult
 TableResult.get_job_client().cancel()
-TableResult.wait(...)
+TableResult.wait(timeout_ms=...)
 TableResult.collect()
 TableResult.print()
 
 // TableConfig
-TableConfig.set(...)
+TableConfig.set(key, value)
 
-// Expressions
-Expressions.* (except for call())
+// Expressions (confluent_pyflink.table.expressions)
+col(), lit(), row(), and the other expression functions  # except call()
 
-// Others
-TableDescriptor.*
-FormatDescriptor.*
+// Windows (confluent_pyflink.table.window)
 Tumble.*
 Slide.*
 Session.*
 Over.*
+
+// Others
+TableDescriptor.*
+FormatDescriptor.*
 ```
 
 Confluent adds the following classes for more convenience:
 ```text
 ConfluentSettings.*
 ConfluentTools.*
-ConfluentTableDescriptor.*
 ```
 
 ## Support
@@ -607,8 +664,8 @@ It should look similar to:
 Note: Only checking `java -version` might not be enough. It might be that it shows a correct Java version, but `JAVA_HOME`
 still points to an invalid version. Consider using [jenv](https://github.com/jenv/jenv).
 
-#### 2. `io.confluent.flink.plugin.ConfluentFlinkException: Parameter 'client.organization-id' not found.`
+#### 2. `ConfluentSettingsValidationError: Missing the following required configuration keys: ...`
 
-This indicates that something is wrong with your configuration. Make sure to fill out the`./config/cloud.properties` file
-with the required connection information to Confluent Cloud, or set all properties via environment variables as described
-above.
+This indicates that something is wrong with your configuration. Make sure all required settings are provided as
+`CONFLUENT_`-prefixed environment variables (a `.env` file works too), or via a JSON/YAML file passed to
+`ConfluentSettings.from_file(...)`, as described above.
