@@ -16,13 +16,13 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import TableEnvironment
-from pyflink.table.confluent import ConfluentSettings
+from confluent_pyflink.table import TableEnvironment
+from confluent_pyflink.table.utils import ConfluentSettings
 
 
 # A table program example to interact with catalogs and databases.
 def run():
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
 
     # Each catalog object is located in a catalog and database
