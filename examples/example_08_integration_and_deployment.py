@@ -18,9 +18,9 @@
 
 import sys
 import uuid
-from pyflink.table import TableEnvironment
-from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table.expressions import lit, with_all_columns
+from confluent_pyflink.table import TableEnvironment
+from confluent_pyflink.table.utils import ConfluentSettings, ConfluentTools
+from confluent_pyflink.table.expressions import lit
 
 # NOTE: This example requires write access to a Kafka cluster. Fill out the
 # given variables below with target catalog/database if this is fine for you.
@@ -79,7 +79,7 @@ def run(args=None):
 
     mode = args[0]
 
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
     env.use_catalog(TARGET_CATALOG)
     env.use_database(TARGET_DATABASE)
@@ -116,10 +116,8 @@ def _set_up_program(env: TableEnvironment):
     print("Start filling table...")
     # Let Flink copy generated data into the mock table. Note that the
     # statement is unbounded and submitted as a background statement by default.
-    pipeline_result = (
-        env.from_path("`examples`.`marketplace`.`products`")
-        .select(with_all_columns())
-        .execute_insert(SOURCE_TABLE)
+    pipeline_result = env.from_path("`examples`.`marketplace`.`products`").execute_insert(
+        SOURCE_TABLE
     )
 
     print("Waiting for at least 200 elements in table...")
@@ -193,7 +191,7 @@ def _deploy_program(env: TableEnvironment):
     # It is possible to give a better statement name for deployment but make sure
     # that the name is unique within environment and region.
     statement_name = "vendors-per-brand-" + str(uuid.uuid4())
-    env.get_config().set("client.statement-name", statement_name)
+    ConfluentTools.set_statement_name(env, statement_name)
 
     # Execute the SQL without dynamic options.
     # The result is unbounded and piped into the target table.

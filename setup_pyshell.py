@@ -1,8 +1,8 @@
-from pyflink.table.confluent import *
-from pyflink.table import *
-from pyflink.table.expressions import *
+from confluent_pyflink.table.utils import *
+from confluent_pyflink.table import *
+from confluent_pyflink.table.expressions import *
 
-settings = ConfluentSettings.from_global_variables()
+settings = ConfluentSettings()
 env = TableEnvironment.create(settings)
 
 print()
