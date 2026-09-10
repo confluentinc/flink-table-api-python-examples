@@ -16,14 +16,14 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import TableEnvironment
-from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table.expressions import col
+from confluent_pyflink.table import TableEnvironment
+from confluent_pyflink.table.utils import ConfluentSettings, ConfluentTools
+from confluent_pyflink.table.expressions import col
 
 
 # A table program example that illustrates how to deal with changelogs.
 def run():
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
 
     env.use_catalog("examples")

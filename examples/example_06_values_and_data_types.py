@@ -17,15 +17,15 @@
 ################################################################################
 from decimal import Decimal
 
-from pyflink.table import TableEnvironment
-from pyflink.table.confluent import ConfluentSettings
-from pyflink.table.expressions import row, lit, array, map_
-from pyflink.table.types import DataTypes
+from confluent_pyflink.table import TableEnvironment
+from confluent_pyflink.table.utils import ConfluentSettings
+from confluent_pyflink.table.expressions import row, lit, array, map_
+from confluent_pyflink.table.types import DataTypes
 
 
 #  A table program example to create mock data
 def run():
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
 
     env.use_catalog("examples")

@@ -16,9 +16,9 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import TableEnvironment, DataTypes, Schema
-from pyflink.table.confluent import ConfluentSettings, ConfluentTableDescriptor
-from pyflink.table.expressions import col, row, concat, lit
+from confluent_pyflink.table import TableEnvironment, DataTypes, Schema, TableDescriptor
+from confluent_pyflink.table.utils import ConfluentSettings
+from confluent_pyflink.table.expressions import col, row, concat, lit
 
 
 # NOTE: This example requires write access to a Kafka cluster. Fill out the given variables
@@ -40,7 +40,7 @@ TARGET_TABLE2 = "PricePerCustomer"
 
 # A table program example that demos how to pipe data into a table or multiple tables.
 def run():
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
 
     env.use_catalog(TARGET_CATALOG)
@@ -51,7 +51,7 @@ def run():
     # Create two helper tables that will be filled with data from examples
     env.create_table(
         TARGET_TABLE1,
-        ConfluentTableDescriptor.for_managed()
+        TableDescriptor.for_managed()
         .schema(
             Schema.new_builder()
             .column("product_id", DataTypes.STRING().not_null())
@@ -64,7 +64,7 @@ def run():
 
     env.create_table(
         TARGET_TABLE2,
-        ConfluentTableDescriptor.for_managed()
+        TableDescriptor.for_managed()
         .schema(
             Schema.new_builder()
             .column("customer_id", DataTypes.INT().not_null())

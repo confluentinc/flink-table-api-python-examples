@@ -16,14 +16,14 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import TableEnvironment, DataTypes
-from pyflink.table.confluent import ConfluentSettings
-from pyflink.table.expressions import col, row, with_all_columns
+from confluent_pyflink.table import TableEnvironment, DataTypes
+from confluent_pyflink.table.utils import ConfluentSettings
+from confluent_pyflink.table.expressions import col, row
 
 
 # A table program example that demos how to transform data with the Table object.
 def run():
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
 
     env.use_catalog("examples")
@@ -34,7 +34,7 @@ def run():
     # pipeline. No execution happens until execute() is called!
 
     # Read from tables like 'orders'
-    orders = env.from_path("orders").select(with_all_columns())
+    orders = env.from_path("orders")
 
     # Or mock tables with values
     customers = env.from_elements(

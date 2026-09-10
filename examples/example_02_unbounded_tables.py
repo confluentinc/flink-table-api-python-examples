@@ -16,14 +16,14 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import TableEnvironment
-from pyflink.table.confluent import ConfluentSettings
-from pyflink.table.expressions import col, row
+from confluent_pyflink.table import TableEnvironment
+from confluent_pyflink.table.utils import ConfluentSettings
+from confluent_pyflink.table.expressions import col, row
 
 
 # A table program example that illustrates bounded and unbounded statements.
 def run():
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
 
     env.use_catalog("examples")
