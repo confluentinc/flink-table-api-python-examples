@@ -16,8 +16,14 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table import TableEnvironment, Schema, DataTypes, FormatDescriptor
-from pyflink.table.confluent import ConfluentSettings, ConfluentTableDescriptor
+from confluent_pyflink.table import (
+    TableEnvironment,
+    Schema,
+    DataTypes,
+    FormatDescriptor,
+    TableDescriptor,
+)
+from confluent_pyflink.table.utils import ConfluentSettings
 
 # NOTE: This example requires write access to a Kafka cluster. Fill out the
 # given variables below with target catalog/database if this is fine for you.
@@ -36,7 +42,7 @@ TARGET_TABLE2 = "MyExampleTable2"
 # A table program example that illustrates how to create a table backed
 # by a Kafka topic.
 def run():
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
 
     t_env = TableEnvironment.create(settings)
 
@@ -51,7 +57,7 @@ def run():
     #   - is distributed across 4 Kafka partitions based on the Kafka message key "user_id"
     t_env.create_table(
         TARGET_TABLE1,
-        ConfluentTableDescriptor.for_managed()
+        TableDescriptor.for_managed()
         .schema(
             Schema.new_builder()
             .column("user_id", DataTypes.STRING())

@@ -16,14 +16,14 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table.confluent import ConfluentSettings, ConfluentTools
-from pyflink.table import TableEnvironment, Row
-from pyflink.table.expressions import col, row
+from confluent_pyflink.table.utils import ConfluentSettings, ConfluentTools
+from confluent_pyflink.table import TableEnvironment, Row
+from confluent_pyflink.table.expressions import col, row
 
 
 def run():
     # Setup connection properties to Confluent Cloud
-    settings = ConfluentSettings.from_global_variables()
+    settings = ConfluentSettings()
     env = TableEnvironment.create(settings)
 
     # Run your first Flink statement in Table API
