@@ -7,13 +7,17 @@ authors = [
 ]
 license = {text = "Apache-2.0"}
 readme = "README.md"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.9,<3.12"
 dependencies = [
-    "confluent-flink-table-api-python-plugin>=1.20.52",
+    "confluent-pyflink>=2.3.2",
 ]
 
 [dependency-groups]
 lint = ["ruff"]
+
+[tool.uv]
+# Pin the build backend below that so beam compiles when it has no platform wheel (e.g. local macOS).
+build-constraint-dependencies = ["setuptools<81"]
 
 [tool.ruff]
 line-length = 99
