@@ -457,22 +457,29 @@ ConfluentTools.collect_materialized(table)
 ConfluentTools.print_materialized(table)
 ```
 
-### `ConfluentTools.get_statement_name` / `ConfluentTools.stop_statement`
+### Managing statements with `StatementHandle`
 
-Additional lifecycle methods are available to control statements on Confluent Cloud after they have
-been submitted.
+A `StatementHandle` controls a statement on Confluent Cloud after it has been submitted. Obtain one
+from the `TableResult` of a statement you just submitted, or by name for a statement submitted
+elsewhere (for example, from a separate CI/CD step).
 
 ```python
-# On TableResult object
-table_result = env.execute_sql("SELECT * FROM examples.marketplace.customers")
-statement_name = ConfluentTools.get_statement_name(table_result)
-ConfluentTools.stop_statement(table_result)
+from confluent_pyflink.table.utils import StatementHandle
 
-# Based on statement name
-handle = ConfluentTools.get_statement_handle_by_name(
-    env, "table-api-2024-03-21-150457-36e0dbb2e366-sql"
-)
+# From the TableResult of a submitted statement
+table_result = env.execute_sql("SELECT * FROM examples.marketplace.customers")
+handle = StatementHandle.from_table_result(table_result)
+print(handle.get_name())
 handle.stop()
+
+# Or look up an existing statement by name
+handle = StatementHandle.from_name(env, "table-api-2024-03-21-150457-36e0dbb2e366-sql")
+handle.resume()
+handle.delete()
+
+# Inspect non-fatal warnings raised while processing the statement
+for warning in handle.get_warnings():
+    print(warning.severity.value, warning.reason, warning.message)
 ```
 
 ### Confluent Table Descriptor
