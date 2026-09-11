@@ -9,7 +9,7 @@ license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.9,<3.12"
 dependencies = [
-    "confluent-pyflink>=2.3.2",
+    "confluent-pyflink>=2.3.3",
 ]
 
 [dependency-groups]
