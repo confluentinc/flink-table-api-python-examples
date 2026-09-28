@@ -1,1 +1,1 @@
-confluent-pyflink==2.3.2
+confluent-pyflink==2.3.3
